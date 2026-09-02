@@ -11,6 +11,10 @@
 # checks the name against the flag's own variant list before it writes anything.
 set -euo pipefail
 
+# ⛔ THESE SCRIPTS NEED python3 AND NOTHING ELSE CHECKS FOR IT. On a Mac with no Xcode command
+# line tools there is no python3, and `make leak` is the central act of module 1.
+command -v python3 >/dev/null || { echo "python3 is not installed. On a Mac: xcode-select --install"; exit 2; }
+
 FLAG="${1:?usage: fault.sh <flagName> <variant>}"
 WANT="${2:?usage: fault.sh <flagName> <variant>}"
 NS="${NS:-otel-demo}"

@@ -22,7 +22,13 @@ kind: ClusterConfig
 metadata:
   name: aiops-lab
   region: us-east-1
-  version: "1.31"
+  # ⛔ 1.31 LEFT STANDARD SUPPORT ON 2025-11-26 and moved to EXTENDED SUPPORT, which bills
+  # the control plane at the higher extended rate instead of $0.10 an hour. I built and
+  # measured this lab on 1.31 and published "about 48 cents an hour" without checking, so
+  # every cost number in module 1 was understated. Checked with:
+  #   aws eks describe-cluster-versions --region us-east-1
+  # 1.36 is the current default and is in standard support until 2027-08-02.
+  version: "1.36"
   tags:
     project: aiops-with-python
 
@@ -41,6 +47,10 @@ managedNodeGroups:
     # whether you use it or not and teaches nothing this course needs.
     privateNetworking: false
 
-cloudWatch:
-  clusterLogging:
-    enableTypes: ["api", "audit"]
+# ⛔ CONTROL PLANE LOGGING IS OFF ON PURPOSE. This used to enable the "api" and "audit"
+# log types, which are the two highest volume ones EKS emits. On an idle cluster they push
+# gigabytes a day into CloudWatch Logs at $0.50 a gigabyte, which was in none of the cost
+# numbers this course publishes. Worse, the log group /aws/eks/aiops-lab/cluster SURVIVES
+# `eksctl delete cluster` and keeps billing storage after the lab is gone, which is exactly
+# the mistake the last minute of module 1 is about.
+# Turn them on when you want to read the audit log, and delete the log group afterwards.

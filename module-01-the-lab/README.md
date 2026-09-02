@@ -15,21 +15,28 @@ Everything typed in the module 1 video is here. Clone it once and follow along.
 
 | | |
 |---|---|
-| EKS control plane | $0.10/hr |
+| EKS control plane | $0.10/hr, on a version in **standard** support |
 | one `m6i.2xlarge` node | $0.3872/hr |
 | **while it is running** | **~$0.48/hr** |
 | **if you forget it for a day** | **~$11.50** |
 
-The whole course costs two or three dollars if you run `make down` when you stop.
+The whole course costs about five dollars if you run `make down` when you stop.
+
+⛔ **Run a Kubernetes version that is still in standard support.** A version in *extended*
+support bills the control plane at six times the rate, and `eksctl` will not warn you. Check
+with `aws eks describe-cluster-versions --region us-east-1`.
 
 ## Before you start
 
 You need an AWS account, and these four on your machine:
 
     aws --version        # AWS CLI v2
-    eksctl version
+    eksctl version       # ⛔ 0.201.0 or newer, or metrics-server is not installed
     kubectl version --client
     helm version
+    python3 --version    # bin/fault.sh needs it
+
+    export AWS_PAGER=""  # or the AWS CLI opens a pager and waits for a keypress
 
 A brand new AWS account often has a low CPU quota. If `make up` stops with
 `VcpuLimitExceeded`, ask AWS for an increase on "Running On-Demand Standard instances" and
@@ -91,6 +98,7 @@ Recorded 2026-09-01 in `us-east-1`, so you can tell whether yours is behaving.
 | | |
 |---|---|
 | cluster build | about 15 to 20 minutes |
+| Kubernetes version | 1.36, in standard support until 2027-08-02 |
 | `helm install` | 185 seconds |
 | pods running | 30 |
 | memory, once quiet | 5.4 GiB |
