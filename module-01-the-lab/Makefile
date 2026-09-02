@@ -1,5 +1,5 @@
 # ⛔ `make down` matters more than `make up`. A cluster you forget about costs about $11 a day.
-.PHONY: up demo grafana faults leak heal down leftovers
+.PHONY: up demo grafana faults leak slowleak heal down leftovers budget metrics cleanlogs limits
 
 up:
 	eksctl create cluster -f eks/cluster.yaml
@@ -33,3 +33,29 @@ down:
 # Deleting a cluster does not always take everything with it. Run this afterwards.
 leftovers:
 	./bin/leftovers.sh
+
+# ⛔ EVERY LONG COMMAND LIVES HERE NOW, AND THAT IS THE POINT. Three recording takes were lost
+# because a long command wrapped on the page and the wrap arrived in the shell as a real line
+# break. A target name is one word. It cannot wrap.
+
+# Put a $20 monthly budget on the account before you spend anything.
+budget:
+	aws budgets create-budget --account-id "$$(aws sts get-caller-identity --query Account --output text)" --budget '{"BudgetName":"aiops-course","BudgetLimit":{"Amount":"20","Unit":"USD"},"TimeUnit":"MONTHLY","BudgetType":"COST"}'
+
+# Only needed if `kubectl top` says "Metrics API not available", on eksctl older than 0.201.
+metrics:
+	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# What the email service is allowed to use.
+limits:
+	kubectl describe deploy email -n otel-demo | grep -A3 Limits:
+
+# The slow version of the leak, sampled to a file. Leave it running for an hour.
+slowleak:
+	./bin/fault.sh emailMemoryLeak 100x
+	@echo "sampling to leak.tsv every 25s. control C to stop."
+	@while true; do kubectl top pod -n otel-demo -l app.kubernetes.io/component=email --no-headers | awk -v t="$$(date +%s)" '{print t, $$3}'; sleep 25; done | tee leak.tsv
+
+# The one leftover that survives `make down` and keeps billing.
+cleanlogs:
+	aws logs delete-log-group --region us-east-1 --log-group-name /aws/eks/aiops-lab/cluster
