@@ -1,0 +1,46 @@
+# The lab cluster for the AIOps with Python course.
+#
+#   eksctl create cluster -f eks/cluster.yaml
+#   eksctl delete cluster -f eks/cluster.yaml --disable-nodegroup-eviction
+#
+# ONE node, and that is a measured decision. On 1 September 2026 this lab was built with two
+# m6i.2xlarge, which is 64 GB. The full stack, meaning the OpenTelemetry Demo's 31 pods plus
+# Neo4j plus Ollama holding a 7B model, used 17.5 GiB. Two nodes was waste.
+#
+# m6i.2xlarge is 8 vCPU and 32 GB. The binding constraint is not memory, it is CPU: Ollama
+# wants seven cores while it is generating. Two smaller 4 vCPU nodes cost the same and halve
+# inference speed, so do not do that.
+#
+# Cost at the time of writing, us-east-1: the node is about $0.384 an hour and the EKS control
+# plane is another $0.10, so roughly 48 cents an hour.
+#
+# ⛔ WHEN YOU FINISH FOR THE DAY, DELETE IT. An idle cluster still bills, about $11 a day.
+
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: aiops-lab
+  region: us-east-1
+  version: "1.31"
+  tags:
+    project: aiops-with-python
+
+iam:
+  withOIDC: true
+
+managedNodeGroups:
+  - name: workers
+    instanceType: m6i.2xlarge
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 2
+    volumeSize: 80
+    volumeType: gp3
+    # Public subnets keep the lab free of a NAT gateway, which costs about $32 a month
+    # whether you use it or not and teaches nothing this course needs.
+    privateNetworking: false
+
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["api", "audit"]
