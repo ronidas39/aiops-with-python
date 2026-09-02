@@ -37,7 +37,7 @@ come back. It is free and it usually takes a few hours.
 
 ## The whole module, in six commands
 
-    make up          # 15-20 minutes. Builds the cluster.
+    make up          # about 15 to 20 minutes. Builds the cluster.
     make demo        # about 3 minutes. Installs 30 pods.
     make grafana     # opens a tunnel, then http://localhost:8080/grafana/
     make leak        # switches the memory leak on
@@ -76,7 +76,7 @@ The OpenTelemetry Demo ships 15 of them. `make faults` prints the live list. The
 module uses:
 
     ./bin/fault.sh emailMemoryLeak 10000x    # OOMKilled in about 70 seconds
-    ./bin/fault.sh emailMemoryLeak 100x      # climbs 44 -> 81 MiB over 33 minutes
+    ./bin/fault.sh emailMemoryLeak 100x      # climbs 44 -> 81 MiB over 35 minutes
     ./bin/fault.sh emailMemoryLeak off
 
 ⛔ **The variants are `off, 1x, 10x, 100x, 1000x, 10000x`.** They are not `on` and `off`.
@@ -90,7 +90,7 @@ Recorded 2026-09-01 in `us-east-1`, so you can tell whether yours is behaving.
 
 | | |
 |---|---|
-| cluster build | 14-17 minutes |
+| cluster build | about 15 to 20 minutes |
 | `helm install` | 185 seconds |
 | pods running | 30 |
 | memory, once quiet | 5.4 GiB |
