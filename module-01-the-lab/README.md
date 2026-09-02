@@ -28,15 +28,65 @@ with `aws eks describe-cluster-versions --region us-east-1`.
 
 ## Before you start
 
-You need an AWS account, and these four on your machine:
+You need an AWS account **with a payment method on it**, and seven things on your machine.
+
+⛔ **If your AWS account is new, do not create access keys for the root login.** Open IAM,
+create a user, attach the `AdministratorAccess` policy, and make the key for that user. That
+is fine for a learning account and it is not fine at work.
+
+### Install, on a Mac
+
+    brew install awscli eksctl kubernetes-cli helm
+
+### Install, on Linux or on Windows inside WSL
+
+⛔ **Only two of these four are in the normal Ubuntu packages.** `kubernetes-cli` is a
+Homebrew-only name, and neither `eksctl` nor `helm` is in apt. The rest come from upstream.
+
+    sudo apt update && sudo apt install -y unzip curl git make python3
+
+    # AWS CLI v2
+    curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o aws.zip \
+      && unzip -q aws.zip && sudo ./aws/install
+
+    # helm
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+    # eksctl
+    curl -fsSL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
+      | sudo tar xz -C /usr/local/bin
+
+    # kubectl
+    curl -fsSLO "https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+      && sudo install kubectl /usr/local/bin/
+
+⛔ **On Windows use WSL, not Git Bash.** Git Bash has no `make`, and every command here goes
+through the Makefile.
+
+### Then check all of them:
+
+    export AWS_PAGER=""  # or the AWS CLI opens a pager and waits for a keypress
 
     aws --version        # AWS CLI v2
     eksctl version       # ⛔ 0.201.0 or newer, or metrics-server is not installed
     kubectl version --client
     helm version
+    git --version
     python3 --version    # bin/fault.sh needs it
+    make --version
 
-    export AWS_PAGER=""  # or the AWS CLI opens a pager and waits for a keypress
+    aws configure                                        # region: us-east-1
+    aws sts get-caller-identity --query Arn --output text # should print an ARN
+
+⛔ **An ARN only proves AWS knows who you are, not that you are allowed to do anything.** If
+`make up` fails after fifteen minutes with `AccessDenied`, that is permissions, not the key.
+
+### Put a budget on it before you start
+
+    aws budgets create-budget --account-id "$(aws sts get-caller-identity --query Account --output text)" \
+      --budget '{"BudgetName":"aiops-course","BudgetLimit":{"Amount":"20","Unit":"USD"},"TimeUnit":"MONTHLY","BudgetType":"COST"}'
+
+It does not stop anything. It makes a forgotten cluster a number you notice.
 
 A brand new AWS account often has a low CPU quota. If `make up` stops with
 `VcpuLimitExceeded`, ask AWS for an increase on "Running On-Demand Standard instances" and
