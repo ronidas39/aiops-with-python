@@ -1,5 +1,5 @@
 # ⛔ `make down` matters more than `make up`. A cluster you forget about costs about $11 a day.
-.PHONY: up demo grafana faults leak slowleak heal down leftovers budget metrics cleanlogs limits
+.PHONY: up demo grafana faults leak slowleak heal down leftovers budget metrics cleanlogs limits watch why logs
 
 up:
 	eksctl create cluster -f eks/cluster.yaml
@@ -59,3 +59,21 @@ slowleak:
 # The one leftover that survives `make down` and keeps billing.
 cleanlogs:
 	aws logs delete-log-group --region us-east-1 --log-group-name /aws/eks/aiops-lab/cluster
+
+# ⛔ THESE THREE EXIST BECAUSE THE LONG FORMS DO NOT FIT ON A PRINTED PAGE, and a wrapped
+# command reaching the shell as two lines is what cost three recording takes.
+
+# Watch ONLY the email pod. Without the label filter you are watching all thirty and the one
+# death you care about scrolls past inside the noise.
+watch:
+	kubectl get pod -n otel-demo -l app.kubernetes.io/component=email -w
+
+# The cluster's own account of why the last container stopped. This is the proof, in
+# Kubernetes' words, rather than an exit code you have to trust.
+why:
+	kubectl describe pod -n otel-demo -l app.kubernetes.io/component=email | grep -A4 "Last State"
+
+# What the pod printed before it was killed. An out of memory kill leaves no error, so the
+# last line is an ordinary one and then nothing. That absence is the lesson.
+logs:
+	kubectl logs deploy/email -n otel-demo --previous --tail=15
