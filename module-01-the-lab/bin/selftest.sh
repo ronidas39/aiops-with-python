@@ -29,9 +29,15 @@ JSON
   *) echo "kubectl $*" ;;
 esac
 FAKE
+# ⛔ THE STUB HAS TO ANSWER LIKE THE REAL THING. `describe-log-groups` returns a count, and
+# returning 0 is what exercises the nothing-to-delete path that broke on camera.
 cat > "$STUB/aws" <<'FAKE'
 #!/usr/bin/env bash
-echo 0
+case "$*" in
+  *describe-log-groups*) echo 0 ;;
+  *delete-log-group*)    echo "should not be called when the count is zero"; exit 1 ;;
+  *)                     echo 0 ;;
+esac
 FAKE
 chmod +x "$STUB/kubectl" "$STUB/aws"
 export PATH="$STUB:$PATH"
@@ -59,6 +65,9 @@ refuses "fault.sh refuses a variant that does not exist" ./bin/fault.sh emailMem
 refuses "fault.sh refuses a flag that does not exist"    ./bin/fault.sh nosuchflag 100x
 refuses "fault.sh refuses with no arguments"             ./bin/fault.sh
 run "leftovers.sh counts"                      ./bin/leftovers.sh
+# ⛔ ADDED AFTER `make cleanlogs` REACHED HIM AND EXITED 254 ON A DRY RUN. "Nothing to delete"
+# is the normal answer for this lab, and the bare aws command treats it as a failure.
+run "cleanlogs.sh survives nothing-to-delete"  ./bin/cleanlogs.sh
 
 # Every make target must at least be resolvable.
 for t in $(grep '^\.PHONY' Makefile | cut -d: -f2); do

@@ -57,8 +57,14 @@ slowleak:
 	@while true; do kubectl top pod -n otel-demo -l app.kubernetes.io/component=email --no-headers | awk -v t="$$(date +%s)" '{print t, $$3}'; sleep 25; done | tee leak.tsv
 
 # The one leftover that survives `make down` and keeps billing.
+#
+# ⛔ NOTHING TO DELETE IS THE GOOD ANSWER, NOT AN ERROR. Control plane logging is off in
+# eks/cluster.yaml, so this cluster normally leaves no log group behind at all. The bare aws
+# command then exits 254 with ResourceNotFoundException, make prints "Error 254", and on
+# camera that reads as a broken lab. It happened on a dry run. Check first, say what is true,
+# and exit clean either way.
 cleanlogs:
-	aws logs delete-log-group --region us-east-1 --log-group-name /aws/eks/aiops-lab/cluster
+	@./bin/cleanlogs.sh
 
 # ⛔ THESE THREE EXIST BECAUSE THE LONG FORMS DO NOT FIT ON A PRINTED PAGE, and a wrapped
 # command reaching the shell as two lines is what cost three recording takes.
