@@ -1,5 +1,5 @@
 # ⛔ `make down` matters more than `make up`. A cluster you forget about costs about $11 a day.
-.PHONY: up demo grafana faults leak slowleak heal down leftovers budget metrics cleanlogs limits watch why logs
+.PHONY: up demo grafana faults leak slowleak heal down leftovers budget metrics cleanlogs limits watch why logs selftest
 
 up:
 	eksctl create cluster -f eks/cluster.yaml
@@ -77,3 +77,10 @@ why:
 # last line is an ordinary one and then nothing. That absence is the lesson.
 logs:
 	kubectl logs deploy/email -n otel-demo --previous --tail=15
+
+# ⛔ RUN THIS BEFORE RECORDING, AND AFTER ANY CHANGE TO bin/. It executes every script against
+# a stub kubectl, with no cluster and no AWS. `make faults` once shipped broken because it was
+# only ever checked with `bash -n`, which passes on a shell script whose embedded Python is
+# truncated. Running it catches that in one second.
+selftest:
+	./bin/selftest.sh
